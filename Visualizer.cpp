@@ -157,3 +157,102 @@ bool CVisualizer::rainbowswirl(uint16_t duration) {
 	else
 		return false;
 }
+
+//================================================================================
+// Effects
+//================================================================================
+
+CEffect::CEffect(void){
+
+
+}
+
+void CEffect::begin(CRGB* l, uint16_t len, uint32_t newInterval){
+	leds = l;
+	numLeds = len; //TODO negative
+	interval = newInterval;
+}
+
+void CEffect::reset(void){
+	time = 0;
+}
+
+bool CEffect::available(void){
+	return update(millis());
+}
+
+bool CEffect::available(uint32_t newTime){
+	// check if interval period has elapsed
+	if (newTime - time >= interval){
+		time = newTime;
+		return true;
+	}
+	else
+		return false;
+}
+
+bool CEffect::update(void){
+	// if interval period has elapsed update leds
+	if (update())
+		return write();
+	else return false;
+}
+
+bool CEffect::update(uint32_t newTime){
+	// if interval period has elapsed update leds
+	if (available(newTime)){
+		write();
+		return true;
+	}
+	else
+		return false;
+}
+
+//================================================================================
+// HeartBeat
+//================================================================================
+
+CHeartBeat::CHeartBeat(void){
+
+}
+
+bool CHeartBeat::write(CRGB color){
+	// blinks Leds in a heartbeat pattern
+	// Leds are filled with the input color
+
+	// cos8 outputs 1-255 so we use the opposite
+	color.nscale8_video(255 - cos8(offset));
+	fill_solid(leds, numLeds, color);
+}
+
+bool CHeartBeat::write(void){
+	// blinks Leds in a heartbeat pattern
+	// Leds are only faded with their original color
+
+	// cos8 outputs 1-255 so we use the opposite
+	for (int i = 0; i < numLeds; i++) //TODO unsigned?
+		leds[i].nscale8_video(255 - cos8(offset));
+}
+
+bool CHeartBeat::next(void){
+	offset++;
+
+	// return true if effect finished
+	if (!offset)
+		return true;
+	else
+		return false;
+}
+
+bool CHeartBeat::finished(void){
+	// return true if effect finished
+	if (!offset)
+		return true;
+	else
+		return false;
+}
+
+void CHeartBeat::end(void){
+	//TODO?
+
+}

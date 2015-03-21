@@ -57,7 +57,7 @@ public:
 private:
 	// Variables to point to the led array and led length
 	CRGB * leds;
-	uint16_t numLeds;
+	uint16_t numLeds; // int?
 
 	// Variables to save temporary visualization values
 	uint8_t heartbeatOffset;
@@ -70,17 +70,56 @@ extern CVisualizer Visualizer;
 // Effects
 //================================================================================
 
+//TODO keywords/documentation
+#define FramesPerSecond(f) (1000 / f)
+
+typedef struct{
+	bool updated : 1;
+	bool finished : 1;
+	bool resevered : 6;
+} Effect_Data_t;//TODO?
+
 class CEffect{
 public:
 	CEffect(void);
-	bool write(void);
+	void begin(CRGB* l, uint16_t len, uint32_t newInterval);
+	virtual bool write(void) = 0; //TODO virtual needed?
 	void reset(void);
+	virtual void end(void) = 0; //TODO?
 
-private:
-	uint32_t time;
-	uint32_t interval; //TODO uint32_t?
+	bool update(void); //todo reduce flash if deleted one function overload?
+	bool update(uint32_t newTime);
 
-	bool update(void);
+	bool available(void); //todo reduce flash if deleted one function overload?
+	bool available(uint32_t newTime); //TODO millis is okay?
+
+	//protected: //TODO private vs protected
+	uint32_t time; //TODO uint32_t?
+	uint32_t interval; //TODO uint32_t? //todo const
+
+	// variables to point to the led array and led length
+	CRGB * leds;
+	uint16_t numLeds; //TODO negative order, backwards
+
+
+};
+
+//================================================================================
+// HeartBeat
+//================================================================================
+
+class CHeartBeat : public CEffect{
+public:
+	CHeartBeat(void);
+	bool write(void);
+	bool write(CRGB color);
+
+	bool next(void);
+
+	bool finished(void);
+	void end(void);
+
+	uint8_t offset;
 };
 
 #endif

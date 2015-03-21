@@ -11,7 +11,7 @@
 #include <Visualizer.h>
 
 // How many leds in your strip?
-#define NUM_LEDS 50
+#define NUM_LEDS 20
 
 // For led chips like Neopixels, which have a data line, ground, and power, you just
 // need to define DATA_PIN.  For led chipsets that are SPI based (four wires - data, clock,
@@ -21,6 +21,8 @@
 
 // Define the array of leds
 CRGB leds[NUM_LEDS];
+
+CHeartBeat h;
 
 void setup() {
   // debug Serial
@@ -41,19 +43,38 @@ void setup() {
   // FastLED.addLeds<NEOPIXEL, DATA_PIN, RGB>(leds, NUM_LEDS);
   // FastLED.addLeds<UCS1903, DATA_PIN, RGB>(leds, NUM_LEDS);
 
-  FastLED.addLeds<WS2801, RGB>(leds, NUM_LEDS);
+  //FastLED.addLeds<WS2801, RGB>(leds, NUM_LEDS);
   // FastLED.addLeds<SM16716, RGB>(leds, NUM_LEDS);
-  // FastLED.addLeds<LPD8806, GRB>(leds, NUM_LEDS);
+  FastLED.addLeds<LPD8806, GRB>(leds, NUM_LEDS);
 
   // FastLED.addLeds<WS2801, DATA_PIN, CLOCK_PIN, RGB>(leds, NUM_LEDS);
   // FastLED.addLeds<SM16716, DATA_PIN, CLOCK_PIN, RGB>(leds, NUM_LEDS);
   // FastLED.addLeds<LPD8806, DATA_PIN, CLOCK_PIN, GRB>(leds, NUM_LEDS);
 
   FastLED.setDither(0); // try this to disable flickering
+  FastLED.setBrightness(63);
   FastLED.show(); // needed!
+
+  h.begin(leds, NUM_LEDS, FramesPerSecond(200));
+
+  Serial.println(h.time);
+  Serial.println(h.interval);
+  Serial.println(h.numLeds);
+  Serial.flush();
 }
 
 void loop() {
+
+  uint32_t time = millis();
+  if (h.available(time)) {
+    fill_solid(leds, NUM_LEDS, CRGB::Green);
+    h.write();
+    h.next();
+    FastLED.show();
+  }
+  return;
+
+
   // fill all leds
   Visualizer.fill(CRGB::Blue);
   FastLED.show();
@@ -96,5 +117,4 @@ void loop() {
   }
   FastLED.delay(300);
 }
-
 
