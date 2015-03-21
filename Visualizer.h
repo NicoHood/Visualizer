@@ -136,7 +136,7 @@ private:
 
 /*
  Blinks Leds in a Heartbeat pattern
- Leds are filled with the input color
+ Leds are filled with an input color
  or dimmed with the underlying color.
  */
 
@@ -150,10 +150,11 @@ public:
 	inline CHeartbeatSolid(CRGB color, CRGB* l, Effect_NumLeds_t len, Effect_Speed_t speed, uint8_t newOffset)
 		: CEffect(l, len, speed), offset(newOffset), colorSolid(color) {}
 
-	void reset(void);
+	void reset(void); //TODO inline?
 	bool write(bool step);
 	bool finished(void); //TODO inline?
 
+	//todo make them just public?
 	inline void setOffset(uint8_t newOffset) { offset = newOffset; }
 	inline void setColor(CRGB color) { colorSolid = color; }
 
@@ -171,10 +172,11 @@ public:
 	inline CHeartbeatDynamic(CRGB* l, Effect_NumLeds_t len, Effect_Speed_t speed, uint8_t newOffset)
 		: CEffect(l, len, speed), offset(newOffset) {}
 
-	void reset(void);
+	void reset(void); //TODO inline?
 	bool write(bool step);
 	bool finished(void); //TODO inline?
 
+	//todo make them just public?
 	inline void setOffset(uint8_t newOffset) { offset = newOffset; }
 
 protected:
