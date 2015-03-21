@@ -71,52 +71,69 @@ extern CVisualizer Visualizer;
 //================================================================================
 
 //TODO keywords/documentation
-#define FramesPerSecond(f) (1000 / f)
-
-typedef struct{
-	bool updated : 1;
-	bool finished : 1;
-	bool resevered : 6;
-} Effect_Data_t;//TODO?
+#define FramesPerSecond(f) (1000 / (f))
 
 class CEffect{
 public:
 	CEffect(void);
 	void begin(CRGB* l, uint16_t len, uint32_t newInterval);
-	virtual bool write(void) = 0; //TODO virtual needed?
-	void reset(void);
+
+	inline bool available(void) { return update(millis()); }
+	inline bool available(uint32_t newTime){
+		// check if interval period has elapsed
+		bool a = (newTime - time >= interval);
+		//return a; //TODO 4kb more code?
+		if (a) return true;
+		else return false;
+	}
+
+	// save last time we updated the leds and execute next effect step
+	inline void next(void) { next(millis()); }
+	inline void next(uint32_t newTime) { time = newTime; }
+
+	virtual bool write(bool step) = 0; //TODO virtual needed? = 0?
+	virtual void write(CRGB color) = 0; //TODO virtual needed? =0?
+
+	inline bool update(bool forceWrite = false) { return update(millis(), forceWrite); }
+	bool update(uint32_t newTime, bool forceWrite = false);
+
+	inline bool update(CRGB color, bool forceWrite = false) { return update(color, millis(), forceWrite); }
+	bool update(CRGB color, uint32_t newTime, bool forceWrite = false);
+
+	void reset(void); //TODO reset time name? virtual? end()?
 	virtual void end(void) = 0; //TODO?
 
-	bool update(void); //todo reduce flash if deleted one function overload?
-	bool update(uint32_t newTime);
 
-	bool available(void); //todo reduce flash if deleted one function overload?
-	bool available(uint32_t newTime); //TODO millis is okay?
-
-	//protected: //TODO private vs protected
-	uint32_t time; //TODO uint32_t?
-	uint32_t interval; //TODO uint32_t? //todo const
+protected: //TODO private vs protected
+	uint32_t interval; //TODO uint32_t? //todo const?
 
 	// variables to point to the led array and led length
 	CRGB * leds;
 	uint16_t numLeds; //TODO negative order, backwards
 
-
+private:
+	uint32_t time; //TODO uint32_t?
 };
 
 //================================================================================
 // HeartBeat
 //================================================================================
 
+/*
+ Blinks Leds in a heartbeat pattern
+ Leds are filled with the input color
+ or dimmed with the underlying color.
+ */
+
 class CHeartBeat : public CEffect{
 public:
 	CHeartBeat(void);
-	bool write(void);
-	bool write(CRGB color);
+	bool write(bool step); //TODO virtual?
+	void write(CRGB color);
 
-	bool next(void);
+	bool nextStep(void); // private/protected
+	bool finished(void); //TODO inline
 
-	bool finished(void);
 	void end(void);
 
 	uint8_t offset;

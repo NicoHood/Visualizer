@@ -57,21 +57,25 @@ void setup() {
 
   h.begin(leds, NUM_LEDS, FramesPerSecond(200));
 
-  Serial.println(h.time);
-  Serial.println(h.interval);
-  Serial.println(h.numLeds);
-  Serial.flush();
 }
 
 void loop() {
+  // variable to determine if leds have changed
+  bool ledChange = false;
 
-  uint32_t time = millis();
-  if (h.available(time)) {
-    fill_solid(leds, NUM_LEDS, CRGB::Green);
-    h.write();
-    h.next();
+  // update strip color (pretending new colors were set)
+  bool colorChange = true;
+  fill_solid(leds, NUM_LEDS, CRGB::Green);
+  ledChange |= colorChange;
+
+  // execute effect on the underlying colors
+  uint32_t time = millis(); //todo move up
+  ledChange |= h.update(time, colorChange);
+
+  // update Leds
+  if (ledChange)
     FastLED.show();
-  }
+
   return;
 
 

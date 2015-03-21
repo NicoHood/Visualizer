@@ -171,41 +171,48 @@ void CEffect::begin(CRGB* l, uint16_t len, uint32_t newInterval){
 	leds = l;
 	numLeds = len; //TODO negative
 	interval = newInterval;
+
+	// todo save new time/reset
 }
+
+//bool CEffect::available(uint32_t newTime){
+//	// check if interval period has elapsed
+//	if (newTime - time >= interval)
+//		return true;
+//	else
+//		return false;
+//
+//	//TODO takes more flash
+//	//return (newTime - time >= interval) ? true : false;
+//}
+
+
+bool CEffect::update(const uint32_t newTime, const bool forceWrite){
+	// if interval period has elapsed execute next step
+	bool step = available(newTime);
+	if (step)
+		next(newTime);
+
+	// update leds
+	if (forceWrite || step)
+		write(step);
+	return step;
+}
+//
+//bool CEffect::update(CRGB color, uint32_t newTime, bool forceWrite){
+//	// if interval period has elapsed execute next step
+//	bool step = available(newTime);
+//	if (step)
+//		next(newTime);
+//
+//	// update led states
+//	if (forceWrite || step)
+//		write(color);
+//	return step;
+//}
 
 void CEffect::reset(void){
 	time = 0;
-}
-
-bool CEffect::available(void){
-	return update(millis());
-}
-
-bool CEffect::available(uint32_t newTime){
-	// check if interval period has elapsed
-	if (newTime - time >= interval){
-		time = newTime;
-		return true;
-	}
-	else
-		return false;
-}
-
-bool CEffect::update(void){
-	// if interval period has elapsed update leds
-	if (update())
-		return write();
-	else return false;
-}
-
-bool CEffect::update(uint32_t newTime){
-	// if interval period has elapsed update leds
-	if (available(newTime)){
-		write();
-		return true;
-	}
-	else
-		return false;
 }
 
 //================================================================================
@@ -216,25 +223,33 @@ CHeartBeat::CHeartBeat(void){
 
 }
 
-bool CHeartBeat::write(CRGB color){
-	// blinks Leds in a heartbeat pattern
-	// Leds are filled with the input color
-
+void CHeartBeat::write(CRGB color){
 	// cos8 outputs 1-255 so we use the opposite
 	color.nscale8_video(255 - cos8(offset));
 	fill_solid(leds, numLeds, color);
 }
 
-bool CHeartBeat::write(void){
-	// blinks Leds in a heartbeat pattern
-	// Leds are only faded with their original color
-
+bool CHeartBeat::write(bool step){
 	// cos8 outputs 1-255 so we use the opposite
+	//TODO unsigned?
+	// 4744 kb
+	//nscale8_video(leds, numLeds, 255 - cos8(offset));
+
+	if (step)
+	offset++;
+
+	// 4848 kb
 	for (int i = 0; i < numLeds; i++) //TODO unsigned?
 		leds[i].nscale8_video(255 - cos8(offset));
+
+	// return true if effect finished
+	if (!offset)
+		return true;
+	else
+		return false;
 }
 
-bool CHeartBeat::next(void){
+bool CHeartBeat::nextStep(void){
 	offset++;
 
 	// return true if effect finished
@@ -245,11 +260,7 @@ bool CHeartBeat::next(void){
 }
 
 bool CHeartBeat::finished(void){
-	// return true if effect finished
-	if (!offset)
-		return true;
-	else
-		return false;
+
 }
 
 void CHeartBeat::end(void){
