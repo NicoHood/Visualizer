@@ -162,17 +162,22 @@ bool CVisualizer::rainbowswirl(uint16_t duration) {
 // Effects
 //================================================================================
 
-CEffect::CEffect(void){
 
-
+void CEffect::begin(const uint32_t newTime){
+	// update leds once to get the first frame and not skip it
+	reset();
+	write(false);
+	next(newTime);
 }
 
-void CEffect::begin(CRGB* l, uint16_t len, uint32_t newInterval){
-	leds = l;
-	numLeds = len; //TODO negative
-	interval = newInterval;
+void CEffect::end(void){
+	// reset leds, write 
+	reset(); //TODO needed? set all black? do nothing?
+	write(true); // todo write?
 
-	// todo save new time/reset
+	// force an overflow next time
+	// to prevent waiting forever to update leds
+	time = 0;
 }
 
 //bool CEffect::available(uint32_t newTime){
@@ -198,18 +203,6 @@ bool CEffect::update(const uint32_t newTime, const bool forceWrite){
 		write(step);
 	return step;
 }
-//
-//bool CEffect::update(CRGB color, uint32_t newTime, bool forceWrite){
-//	// if interval period has elapsed execute next step
-//	bool step = available(newTime);
-//	if (step)
-//		next(newTime);
-//
-//	// update led states
-//	if (forceWrite || step)
-//		write(color);
-//	return step;
-//}
 
 void CEffect::reset(void){
 	time = 0;
@@ -219,28 +212,35 @@ void CEffect::reset(void){
 // HeartBeat
 //================================================================================
 
-CHeartBeat::CHeartBeat(void){
+//CHeartBeat::CHeartBeat(void){
+//	// todo set default speed?
+//}
 
-}
-
-void CHeartBeat::write(CRGB color){
-	// cos8 outputs 1-255 so we use the opposite
-	color.nscale8_video(255 - cos8(offset));
-	fill_solid(leds, numLeds, color);
-}
+//void CHeartBeat::write(CRGB color){
+//	// cos8 outputs 1-255 so we use the opposite
+//	color.nscale8_video(255 - cos8(offset));
+//	fill_solid(leds, numLeds, color);
+//}
 
 bool CHeartBeat::write(bool step){
 	// cos8 outputs 1-255 so we use the opposite
 	//TODO unsigned?
-	// 4744 kb
-	//nscale8_video(leds, numLeds, 255 - cos8(offset));
+
 
 	if (step)
-	offset++;
+		offset++;
 
-	// 4848 kb
+	// 4666 kb
 	for (int i = 0; i < numLeds; i++) //TODO unsigned?
 		leds[i].nscale8_video(255 - cos8(offset));
+
+	// 4672 kb
+	//uint8_t scale = 255 - cos8(offset);
+	//for (int i = 0; i < numLeds; i++) //TODO unsigned?
+	//	leds[i].nscale8_video(scale);
+
+	// 4704 kb
+	//nscale8_video(leds, numLeds, 255 - cos8(offset));
 
 	// return true if effect finished
 	if (!offset)
@@ -265,5 +265,5 @@ bool CHeartBeat::finished(void){
 
 void CHeartBeat::end(void){
 	//TODO?
-
+	offset = 0;
 }

@@ -22,7 +22,7 @@
 // Define the array of leds
 CRGB leds[NUM_LEDS];
 
-CHeartBeat h;
+CHeartBeat h(leds, NUM_LEDS, FramesPerSecond(200));
 
 void setup() {
   // debug Serial
@@ -54,14 +54,14 @@ void setup() {
   FastLED.setDither(0); // try this to disable flickering
   FastLED.setBrightness(63);
   FastLED.show(); // needed!
-
-  h.begin(leds, NUM_LEDS, FramesPerSecond(200));
+//leds, NUM_LEDS, FramesPerSecond(200)
+  h.begin();
 
 }
 
 void loop() {
-  // variable to determine if leds have changed
-  bool ledChange = false;
+// variable to determine if leds have changed
+    bool ledChange = false;
 
   // update strip color (pretending new colors were set)
   bool colorChange = true;

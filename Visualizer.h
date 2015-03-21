@@ -73,16 +73,40 @@ extern CVisualizer Visualizer;
 //TODO keywords/documentation
 #define FramesPerSecond(f) (1000 / (f))
 
+// speed setting limited to 2 bytes
+// = max update period every 65.535s (about 1 min)
+typedef uint16_t Visualizer_Speed_t;
+
+#define EFFECT_DEFAULT_SPEED FramesPerSecond(60)
+
+/*
+CEffect class contains general function for all Effects
+and manages their timing and execution.
+Other effects should inherit from this class.
+*/
+
 class CEffect{
 public:
-	CEffect(void);
-	void begin(CRGB* l, uint16_t len, uint32_t newInterval);
+	// force an overflow next time
+	// to prevent waiting forever to update leds
+	inline CEffect(void) : CEffect(NULL, 0) {}
+	inline CEffect(CRGB* l, uint16_t len) : CEffect(l, len, EFFECT_DEFAULT_SPEED) {}
+	inline CEffect(CRGB* l, uint16_t len, Visualizer_Speed_t speed)
+		: leds(l), numLeds(len), interval(speed), time(0) {}
+
+	inline void begin(void) { begin(millis()); }
+	void begin(const uint32_t newTime);
+
+	inline void setLeds(CRGB* l) { leds = l; }
+	inline void setNumLeds(uint16_t len) { numLeds = len; }
+	inline void setSpeed(Visualizer_Speed_t speed) { interval = speed; }
 
 	inline bool available(void) { return update(millis()); }
+	//todo inline?
 	inline bool available(uint32_t newTime){
 		// check if interval period has elapsed
 		bool a = (newTime - time >= interval);
-		//return a; //TODO 4kb more code?
+		//return a; //TODO 4byte more code?
 		if (a) return true;
 		else return false;
 	}
@@ -91,28 +115,23 @@ public:
 	inline void next(void) { next(millis()); }
 	inline void next(uint32_t newTime) { time = newTime; }
 
-	virtual bool write(bool step) = 0; //TODO virtual needed? = 0?
-	virtual void write(CRGB color) = 0; //TODO virtual needed? =0?
+	virtual bool write(bool step) = 0;
 
 	inline bool update(bool forceWrite = false) { return update(millis(), forceWrite); }
 	bool update(uint32_t newTime, bool forceWrite = false);
 
-	inline bool update(CRGB color, bool forceWrite = false) { return update(color, millis(), forceWrite); }
-	bool update(CRGB color, uint32_t newTime, bool forceWrite = false);
-
 	void reset(void); //TODO reset time name? virtual? end()?
-	virtual void end(void) = 0; //TODO?
+	virtual void end(void); //TODO? = 0 for reset?
 
 
-protected: //TODO private vs protected
-	uint32_t interval; //TODO uint32_t? //todo const?
-
-	// variables to point to the led array and led length
-	CRGB * leds;
-	uint16_t numLeds; //TODO negative order, backwards
+protected:
+	// variables to point to the led array, length and speed setting
+	CRGB* leds;
+	uint16_t numLeds; //TODO negative order, backwards?
+	Visualizer_Speed_t interval;
 
 private:
-	uint32_t time; //TODO uint32_t?
+	uint32_t time;
 };
 
 //================================================================================
@@ -127,9 +146,16 @@ private:
 
 class CHeartBeat : public CEffect{
 public:
-	CHeartBeat(void);
-	bool write(bool step); //TODO virtual?
-	void write(CRGB color);
+	// use parent constructors
+	CHeartBeat(void) : CEffect() {}
+	CHeartBeat(CRGB* l, uint16_t len) : CEffect(l, len) {}
+	CHeartBeat(CRGB* l, uint16_t len, Visualizer_Speed_t speed) : CEffect(l, len, speed) {}
+
+	//todo color dupe
+	CHeartBeat(CRGB color);
+	CRGB color;
+
+	bool write(bool step);
 
 	bool nextStep(void); // private/protected
 	bool finished(void); //TODO inline
