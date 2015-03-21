@@ -21,7 +21,8 @@
 CRGB leds[NUM_LEDS];
 
 // Effects
-CHeartbeatDynamic h(leds, NUM_LEDS, FramesPerSecond(200));
+CHeartbeatDynamic h(&leds[0], 10, FramesPerSecond(200));
+CHeartbeatSolid hS(CRGB::Blue, &leds[10], 10, FramesPerSecond(200), 128);
 
 void setup() {
   // debug Serial
@@ -30,8 +31,9 @@ void setup() {
 
   // You can put this anywhere in the setup
   // Just call it before you use any visualization
-  Visualizer.begin(leds, NUM_LEDS);
+  //Visualizer.begin(leds, NUM_LEDS);
 
+  // FastLED setup
   FastLED.addLeds<CHIPSET, LED_PINS COLOR_ORDER>(leds, NUM_LEDS).setCorrection(CORRECTION);
   FastLED.setBrightness( BRIGHTNESS );
   FastLED.setDither(DITHER);
@@ -47,7 +49,7 @@ void loop() {
 
   // update strip color (pretending new colors were set)
   bool colorChange = true;
-  fill_solid(leds, NUM_LEDS, CRGB::Green);
+  fill_solid(&leds[0], 10, CRGB::Green);
   ledChange |= colorChange;
 
   // execute effect on the underlying colors
@@ -57,54 +59,56 @@ void loop() {
     //todo update color next time before the effect want to update/scale down brightness
   }
   ledChange |= effectChange;
+  ledChange |= hS.update(time);
 
   // update Leds
   if (ledChange)
     FastLED.show();
 
   return;
+  /*
 
-
-  // fill all leds
-  Visualizer.fill(CRGB::Blue);
-  FastLED.show();
-  FastLED.delay(500);
-
-  // fill all leds and dim
-  Visualizer.fill(CRGB::Red);
-  Visualizer.dim(127);
-  FastLED.show();
-  FastLED.delay(500);
-
-  // fill all leds and dim more efficient
-  Visualizer.fill(CRGB::Orange, 50);
-  FastLED.show();
-  FastLED.delay(500);
-
-  // fill all leds with HSV color
-  Visualizer.fill(CHSV(HUE_PURPLE, 255, 255));
-  FastLED.show();
-  FastLED.delay(500);
-
-  // blink leds in Heartbeat pattern
-  while (1) {
-    bool end = Visualizer.Heartbeat(CRGB::White);
+    // fill all leds
+    Visualizer.fill(CRGB::Blue);
     FastLED.show();
-    if (end)
-      break;
-    FastLED.delay(10);
-  }
-  FastLED.delay(300);
+    FastLED.delay(500);
 
-  // show a colorful rainbow that turns around and fades in and out
-  while (1) {
-    // 256 = 1 round
-    bool end = Visualizer.rainbowswirl(512);
+    // fill all leds and dim
+    Visualizer.fill(CRGB::Red);
+    Visualizer.dim(127);
     FastLED.show();
-    if (end)
-      break;
-    FastLED.delay(5);
-  }
-  FastLED.delay(300);
+    FastLED.delay(500);
+
+    // fill all leds and dim more efficient
+    Visualizer.fill(CRGB::Orange, 50);
+    FastLED.show();
+    FastLED.delay(500);
+
+    // fill all leds with HSV color
+    Visualizer.fill(CHSV(HUE_PURPLE, 255, 255));
+    FastLED.show();
+    FastLED.delay(500);
+
+    // blink leds in Heartbeat pattern
+    while (1) {
+      bool end = Visualizer.Heartbeat(CRGB::White);
+      FastLED.show();
+      if (end)
+        break;
+      FastLED.delay(10);
+    }
+    FastLED.delay(300);
+
+    // show a colorful rainbow that turns around and fades in and out
+    while (1) {
+      // 256 = 1 round
+      bool end = Visualizer.rainbowswirl(512);
+      FastLED.show();
+      if (end)
+        break;
+      FastLED.delay(5);
+    }
+    FastLED.delay(300);
+    */
 }
 

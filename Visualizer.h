@@ -78,7 +78,10 @@ extern CVisualizer Visualizer;
 typedef uint16_t Effect_Speed_t;
 typedef uint8_t Effect_NumLeds_t; //TODO settings note
 
+#define EFFECT_DEFAULT_LEDS 0
 #define EFFECT_DEFAULT_SPEED FramesPerSecond(60)
+#define EFFECT_DEFAULT_OFFSET 0
+
 #define EFFECT_DIRECTION_FORTH true
 #define EFFECT_DIRECTION_BACK false
 
@@ -90,7 +93,7 @@ Other effects should inherit from this class.
 
 class CEffect{
 public:
-	inline CEffect(void) : CEffect(NULL, 0) {}
+	inline CEffect(void) : CEffect(NULL, EFFECT_DEFAULT_LEDS) {}
 	inline CEffect(CRGB* l, Effect_NumLeds_t len) : CEffect(l, len, EFFECT_DEFAULT_SPEED) {}
 	inline CEffect(CRGB* l, Effect_NumLeds_t len, Effect_Speed_t speed)
 		: leds(l), numLeds(len), interval(speed), time(0) {}
@@ -140,15 +143,18 @@ private:
 class CHeartbeatSolid : public CEffect{
 public:
 	// use parent constructors
-	inline CHeartbeatSolid(CRGB color) : CHeartbeatSolid(color, NULL, 0) {}
+	inline CHeartbeatSolid(CRGB color) : CHeartbeatSolid(color, NULL, EFFECT_DEFAULT_LEDS) {}
 	inline CHeartbeatSolid(CRGB color, CRGB* l, Effect_NumLeds_t len) : CHeartbeatSolid(color, l, len, EFFECT_DEFAULT_SPEED) {}
 	inline CHeartbeatSolid(CRGB color, CRGB* l, Effect_NumLeds_t len, Effect_Speed_t speed)
-		: CEffect(l, len, speed), offset(0), colorSolid(color) {}
+		: CHeartbeatSolid(color, l, len, speed, EFFECT_DEFAULT_OFFSET) {}
+	inline CHeartbeatSolid(CRGB color, CRGB* l, Effect_NumLeds_t len, Effect_Speed_t speed, uint8_t newOffset)
+		: CEffect(l, len, speed), offset(newOffset), colorSolid(color) {}
 
 	void reset(void);
 	bool write(bool step);
 	bool finished(void); //TODO inline?
 
+	inline void setOffset(uint8_t newOffset) { offset = newOffset; }
 	inline void setColor(CRGB color) { colorSolid = color; }
 
 protected:
@@ -159,14 +165,17 @@ protected:
 class CHeartbeatDynamic : public CEffect{
 public:
 	// use parent constructors
-	inline CHeartbeatDynamic(void) : CHeartbeatDynamic(NULL, 0) {}
+	inline CHeartbeatDynamic(void) : CHeartbeatDynamic(NULL, EFFECT_DEFAULT_LEDS) {}
 	inline CHeartbeatDynamic(CRGB* l, Effect_NumLeds_t len) : CHeartbeatDynamic(l, len, EFFECT_DEFAULT_SPEED) {}
-	inline CHeartbeatDynamic(CRGB* l, Effect_NumLeds_t len, Effect_Speed_t speed)
-		: CEffect(l, len, speed), offset(0) {}
+	inline CHeartbeatDynamic(CRGB* l, Effect_NumLeds_t len, Effect_Speed_t speed) : CHeartbeatDynamic(l, len, speed, EFFECT_DEFAULT_OFFSET) {}
+	inline CHeartbeatDynamic(CRGB* l, Effect_NumLeds_t len, Effect_Speed_t speed, uint8_t newOffset)
+		: CEffect(l, len, speed), offset(newOffset) {}
 
 	void reset(void);
 	bool write(bool step);
 	bool finished(void); //TODO inline?
+
+	inline void setOffset(uint8_t newOffset) { offset = newOffset; }
 
 protected:
 	uint8_t offset;
