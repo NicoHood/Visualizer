@@ -1,28 +1,27 @@
 /*
- Copyright (c) 2014 NicoHood
+ Copyright (c) 2014-2015 NicoHood
  See the readme for credit to other people.
 
  Visualizer example
  */
 
-// FastLed v2.1
 #include "FastLED.h"
-
 #include <Visualizer.h>
 
-// How many leds in your strip?
-#define NUM_LEDS 20
+#define LED_PINS     // DATA_PIN, or DATA_PIN, CLOCK_PIN, or empty for SPI
+#define COLOR_ORDER GRB
+#define CHIPSET     LPD8806
+#define NUM_LEDS    20
 
-// For led chips like Neopixels, which have a data line, ground, and power, you just
-// need to define DATA_PIN.  For led chipsets that are SPI based (four wires - data, clock,
-// ground, and power), like the LPD8806 define both DATA_PIN and CLOCK_PIN
-#define DATA_PIN 11
-#define CLOCK_PIN 13
+#define BRIGHTNESS  63 // reduce power consumption
+#define DITHER      0  // try this to disable flickering
+#define CORRECTION TypicalLEDStrip
 
 // Define the array of leds
 CRGB leds[NUM_LEDS];
 
-CHeartBeat h(leds, NUM_LEDS, FramesPerSecond(200));
+// Effects
+CHeartbeatDynamic h(leds, NUM_LEDS, FramesPerSecond(200));
 
 void setup() {
   // debug Serial
@@ -33,35 +32,18 @@ void setup() {
   // Just call it before you use any visualization
   Visualizer.begin(leds, NUM_LEDS);
 
-  // Uncomment/edit one of the following lines for your leds arrangement.
-  // FastLED.addLeds<TM1803, DATA_PIN, RGB>(leds, NUM_LEDS);
-  // FastLED.addLeds<TM1804, DATA_PIN, RGB>(leds, NUM_LEDS);
-  // FastLED.addLeds<TM1809, DATA_PIN, RGB>(leds, NUM_LEDS);
-  // FastLED.addLeds<WS2811, DATA_PIN, RGB>(leds, NUM_LEDS);
-  // FastLED.addLeds<WS2812, DATA_PIN, RGB>(leds, NUM_LEDS);
-  // FastLED.addLeds<WS2812B, DATA_PIN, RGB>(leds, NUM_LEDS);
-  // FastLED.addLeds<NEOPIXEL, DATA_PIN, RGB>(leds, NUM_LEDS);
-  // FastLED.addLeds<UCS1903, DATA_PIN, RGB>(leds, NUM_LEDS);
+  FastLED.addLeds<CHIPSET, LED_PINS COLOR_ORDER>(leds, NUM_LEDS).setCorrection(CORRECTION);
+  FastLED.setBrightness( BRIGHTNESS );
+  FastLED.setDither(DITHER);
+  FastLED.show(); // needed to reset leds to zero
 
-  //FastLED.addLeds<WS2801, RGB>(leds, NUM_LEDS);
-  // FastLED.addLeds<SM16716, RGB>(leds, NUM_LEDS);
-  FastLED.addLeds<LPD8806, GRB>(leds, NUM_LEDS);
-
-  // FastLED.addLeds<WS2801, DATA_PIN, CLOCK_PIN, RGB>(leds, NUM_LEDS);
-  // FastLED.addLeds<SM16716, DATA_PIN, CLOCK_PIN, RGB>(leds, NUM_LEDS);
-  // FastLED.addLeds<LPD8806, DATA_PIN, CLOCK_PIN, GRB>(leds, NUM_LEDS);
-
-  FastLED.setDither(0); // try this to disable flickering
-  FastLED.setBrightness(63);
-  FastLED.show(); // needed!
-//leds, NUM_LEDS, FramesPerSecond(200)
+  // todo needed?
   h.begin();
-
 }
 
 void loop() {
-// variable to determine if leds have changed
-    bool ledChange = false;
+  // variable to determine if leds have changed
+  bool ledChange = false;
 
   // update strip color (pretending new colors were set)
   bool colorChange = true;
@@ -70,7 +52,11 @@ void loop() {
 
   // execute effect on the underlying colors
   uint32_t time = millis(); //todo move up
-  ledChange |= h.update(time, colorChange);
+  bool effectChange =  h.update(time, colorChange);
+  if (effectChange) {
+    //todo update color next time before the effect want to update/scale down brightness
+  }
+  ledChange |= effectChange;
 
   // update Leds
   if (ledChange)
@@ -100,9 +86,9 @@ void loop() {
   FastLED.show();
   FastLED.delay(500);
 
-  // blink leds in heartbeat pattern
+  // blink leds in Heartbeat pattern
   while (1) {
-    bool end = Visualizer.heartbeat(CRGB::White);
+    bool end = Visualizer.Heartbeat(CRGB::White);
     FastLED.show();
     if (end)
       break;

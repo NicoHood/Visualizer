@@ -58,7 +58,7 @@ void CVisualizer::clear(void){
 
 void CVisualizer::reset(void){
 	// reset all temporary led values
-	heartbeatOffset = 0;
+	HeartbeatOffset = 0;
 	rainbowOffset = 0;
 }
 
@@ -124,15 +124,15 @@ bool CVisualizer::dim(uint8_t brightness) {
 	return true;
 }
 
-bool CVisualizer::heartbeat(CRGB color) {
-	// blinks Leds in a heartbeat pattern
-	heartbeatOffset++;
+bool CVisualizer::Heartbeat(CRGB color) {
+	// blinks Leds in a Heartbeat pattern
+	HeartbeatOffset++;
 
 	// cos8 outputs 1-255 so we use the opposite
-	color.nscale8_video(255 - cos8(heartbeatOffset));
+	color.nscale8_video(255 - cos8(HeartbeatOffset));
 	fill(color);
 	// return true if effect is finished
-	if (!heartbeatOffset)
+	if (!HeartbeatOffset)
 		return true;
 	else
 		return false;
@@ -165,7 +165,7 @@ bool CVisualizer::rainbowswirl(uint16_t duration) {
 
 void CEffect::begin(const uint32_t newTime){
 	// update leds once to get the first frame and not skip it
-	reset();
+	reset(); //TODO needed?
 	write(false);
 	next(newTime);
 }
@@ -180,17 +180,21 @@ void CEffect::end(void){
 	time = 0;
 }
 
-//bool CEffect::available(uint32_t newTime){
-//	// check if interval period has elapsed
-//	if (newTime - time >= interval)
-//		return true;
-//	else
-//		return false;
-//
-//	//TODO takes more flash
-//	//return (newTime - time >= interval) ? true : false;
-//}
+bool CEffect::available(uint32_t newTime){
+	// check if interval period has elapsed
+	//TODO takes more flash
+	//return (newTime - time >= interval);
 
+	if (newTime - time >= interval)
+		return true;
+	else
+		return false;
+}
+
+void CEffect::next(uint32_t newTime){
+	// save last time we updated the leds and execute next effect step
+	time = newTime;
+}
 
 bool CEffect::update(const uint32_t newTime, const bool forceWrite){
 	// if interval period has elapsed execute next step
@@ -204,66 +208,66 @@ bool CEffect::update(const uint32_t newTime, const bool forceWrite){
 	return step;
 }
 
-void CEffect::reset(void){
-	time = 0;
-}
-
 //================================================================================
-// HeartBeat
+// Heartbeat
 //================================================================================
 
-//CHeartBeat::CHeartBeat(void){
-//	// todo set default speed?
-//}
-
-//void CHeartBeat::write(CRGB color){
-//	// cos8 outputs 1-255 so we use the opposite
-//	color.nscale8_video(255 - cos8(offset));
-//	fill_solid(leds, numLeds, color);
-//}
-
-bool CHeartBeat::write(bool step){
-	// cos8 outputs 1-255 so we use the opposite
-	//TODO unsigned?
-
-
+bool CHeartbeatSolid::write(bool step){
+	// next step
 	if (step)
 		offset++;
 
+	// cos8 outputs 1-255 so we use the opposite
+	CRGB color = colorSolid;
+	color.nscale8_video(255 - cos8(offset));
+	fill_solid(leds, numLeds, color);
+
+	// return true if effect finished (leds are off)
+	return finished();
+}
+
+bool CHeartbeatSolid::finished(void){
+	// return true if effect finished
+	//TODO inline?
+	return !offset;
+}
+
+void CHeartbeatSolid::reset(void){
+	//TODO inline?
+	offset = 0;
+}
+
+
+bool CHeartbeatDynamic::write(bool step){
+	// next step
+	if (step)
+		offset++;
+
+	// cos8 outputs 1-255 so we use the opposite
+
 	// 4666 kb
-	for (int i = 0; i < numLeds; i++) //TODO unsigned?
+	for (Effect_NumLeds_t i = 0; i < numLeds; i++) //TODO unsigned?
 		leds[i].nscale8_video(255 - cos8(offset));
 
 	// 4672 kb
 	//uint8_t scale = 255 - cos8(offset);
-	//for (int i = 0; i < numLeds; i++) //TODO unsigned?
+	//for (Effect_NumLeds_t i = 0; i < numLeds; i++) //TODO unsigned?
 	//	leds[i].nscale8_video(scale);
 
 	// 4704 kb
 	//nscale8_video(leds, numLeds, 255 - cos8(offset));
 
-	// return true if effect finished
-	if (!offset)
-		return true;
-	else
-		return false;
+	// return true if effect finished (leds are off)
+	return finished();
 }
 
-bool CHeartBeat::nextStep(void){
-	offset++;
-
-	// return true if effect finished
-	if (!offset)
-		return true;
-	else
-		return false;
+bool CHeartbeatDynamic::finished(void){
+	// return true if effect finished (leds are off)
+	//TODO inline?
+	return !offset;
 }
 
-bool CHeartBeat::finished(void){
-
-}
-
-void CHeartBeat::end(void){
-	//TODO?
+void CHeartbeatDynamic::reset(void){
+	//TODO inline?
 	offset = 0;
 }

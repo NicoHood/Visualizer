@@ -51,7 +51,7 @@ public:
 	bool dim(uint8_t brightness);
 
 	// Visualizations
-	bool heartbeat(CRGB color);
+	bool Heartbeat(CRGB color);
 	bool rainbowswirl(uint16_t duration);
 
 private:
@@ -60,7 +60,7 @@ private:
 	uint16_t numLeds; // int?
 
 	// Variables to save temporary visualization values
-	uint8_t heartbeatOffset;
+	uint8_t HeartbeatOffset;
 	uint16_t rainbowOffset;
 };
 
@@ -75,9 +75,12 @@ extern CVisualizer Visualizer;
 
 // speed setting limited to 2 bytes
 // = max update period every 65.535s (about 1 min)
-typedef uint16_t Visualizer_Speed_t;
+typedef uint16_t Effect_Speed_t;
+typedef uint8_t Effect_NumLeds_t; //TODO settings note
 
 #define EFFECT_DEFAULT_SPEED FramesPerSecond(60)
+#define EFFECT_DIRECTION_FORTH true
+#define EFFECT_DIRECTION_BACK false
 
 /*
 CEffect class contains general function for all Effects
@@ -87,81 +90,85 @@ Other effects should inherit from this class.
 
 class CEffect{
 public:
-	// force an overflow next time
-	// to prevent waiting forever to update leds
 	inline CEffect(void) : CEffect(NULL, 0) {}
-	inline CEffect(CRGB* l, uint16_t len) : CEffect(l, len, EFFECT_DEFAULT_SPEED) {}
-	inline CEffect(CRGB* l, uint16_t len, Visualizer_Speed_t speed)
+	inline CEffect(CRGB* l, Effect_NumLeds_t len) : CEffect(l, len, EFFECT_DEFAULT_SPEED) {}
+	inline CEffect(CRGB* l, Effect_NumLeds_t len, Effect_Speed_t speed)
 		: leds(l), numLeds(len), interval(speed), time(0) {}
 
 	inline void begin(void) { begin(millis()); }
 	void begin(const uint32_t newTime);
 
-	inline void setLeds(CRGB* l) { leds = l; }
-	inline void setNumLeds(uint16_t len) { numLeds = len; }
-	inline void setSpeed(Visualizer_Speed_t speed) { interval = speed; }
+	void end(void);
 
 	inline bool available(void) { return update(millis()); }
-	//todo inline?
-	inline bool available(uint32_t newTime){
-		// check if interval period has elapsed
-		bool a = (newTime - time >= interval);
-		//return a; //TODO 4byte more code?
-		if (a) return true;
-		else return false;
-	}
+	bool available(uint32_t newTime);
 
-	// save last time we updated the leds and execute next effect step
 	inline void next(void) { next(millis()); }
-	inline void next(uint32_t newTime) { time = newTime; }
+	void next(uint32_t newTime);
 
+	virtual void reset(void) = 0;
 	virtual bool write(bool step) = 0;
 
 	inline bool update(bool forceWrite = false) { return update(millis(), forceWrite); }
 	bool update(uint32_t newTime, bool forceWrite = false);
 
-	void reset(void); //TODO reset time name? virtual? end()?
-	virtual void end(void); //TODO? = 0 for reset?
+	inline void setLeds(CRGB* l) { leds = l; }
+	inline void setNumLeds(Effect_NumLeds_t len) { numLeds = len; }
+	inline void setSpeed(Effect_Speed_t speed) { interval = speed; }
 
 
 protected:
 	// variables to point to the led array, length and speed setting
 	CRGB* leds;
-	uint16_t numLeds; //TODO negative order, backwards?
-	Visualizer_Speed_t interval;
+	Effect_NumLeds_t numLeds; //TODO negative order, backwards?
+	Effect_Speed_t interval;
 
 private:
 	uint32_t time;
 };
 
 //================================================================================
-// HeartBeat
+// Heartbeat
 //================================================================================
 
 /*
- Blinks Leds in a heartbeat pattern
+ Blinks Leds in a Heartbeat pattern
  Leds are filled with the input color
  or dimmed with the underlying color.
  */
 
-class CHeartBeat : public CEffect{
+class CHeartbeatSolid : public CEffect{
 public:
 	// use parent constructors
-	CHeartBeat(void) : CEffect() {}
-	CHeartBeat(CRGB* l, uint16_t len) : CEffect(l, len) {}
-	CHeartBeat(CRGB* l, uint16_t len, Visualizer_Speed_t speed) : CEffect(l, len, speed) {}
+	inline CHeartbeatSolid(CRGB color) : CHeartbeatSolid(color, NULL, 0) {}
+	inline CHeartbeatSolid(CRGB color, CRGB* l, Effect_NumLeds_t len) : CHeartbeatSolid(color, l, len, EFFECT_DEFAULT_SPEED) {}
+	inline CHeartbeatSolid(CRGB color, CRGB* l, Effect_NumLeds_t len, Effect_Speed_t speed)
+		: CEffect(l, len, speed), offset(0), colorSolid(color) {}
 
-	//todo color dupe
-	CHeartBeat(CRGB color);
-	CRGB color;
-
+	void reset(void);
 	bool write(bool step);
+	bool finished(void); //TODO inline?
 
-	bool nextStep(void); // private/protected
-	bool finished(void); //TODO inline
+	inline void setColor(CRGB color) { colorSolid = color; }
 
-	void end(void);
+protected:
+	uint8_t offset;
+	CRGB colorSolid;
+};
 
+class CHeartbeatDynamic : public CEffect{
+public:
+	// use parent constructors
+	inline CHeartbeatDynamic(void) : CHeartbeatDynamic(NULL, 0) {}
+	inline CHeartbeatDynamic(CRGB* l, Effect_NumLeds_t len) : CHeartbeatDynamic(l, len, EFFECT_DEFAULT_SPEED) {}
+	inline CHeartbeatDynamic(CRGB* l, Effect_NumLeds_t len, Effect_Speed_t speed)
+		: CEffect(l, len, speed), offset(0) {}
+
+	void reset(void);
+	bool write(bool step);
+	bool finished(void); //TODO inline?
+
+protected:
 	uint8_t offset;
 };
 
