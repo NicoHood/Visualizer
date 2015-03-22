@@ -183,9 +183,9 @@ void CEffect::end(void){
 bool CEffect::available(uint32_t newTime){
 	// check if interval period has elapsed
 	//TODO takes more flash
-	//return (newTime - time >= interval);
+	//return ((newTime - time) >= getSpeed());
 
-	if (newTime - time >= interval)
+	if (newTime - time >= getSpeed())
 		return true;
 	else
 		return false;
@@ -271,3 +271,86 @@ void CHeartbeatDynamic::reset(void){
 	//TODO inline?
 	offset = 0;
 }
+
+//================================================================================
+// Rainbowswirl
+//================================================================================
+
+
+bool CRainbowswirl::write(bool step){
+	// next step
+	if (step)
+		offset++;
+
+	// fills array with rainbow colors
+	uint8_t deltahue = 255 / numLeds;
+	fill_rainbow(leds, numLeds, offset, deltahue);
+
+	// return true if effect finished (leds are off)
+	return finished();
+}
+
+bool CRainbowswirl::finished(void){
+	// return true if effect finished
+	//TODO inline?
+	return !offset;
+}
+
+void CRainbowswirl::reset(void){
+	//TODO inline?
+	offset = 0;
+}
+//
+//bool CVisualizer::rainbowswirl(uint16_t duration) {
+//	// fills array with rainbow colors and rotate
+//	// comes with a fadein - fadeout effect
+//
+//	// this will output errors for duration = 0
+//	uint8_t brightness = fade(rainbowOffset, duration - 1);
+//
+//	// write to led array
+//	fillrainbow(rainbowOffset, brightness);
+//
+//	// return true if effect is finished
+//	rainbowOffset++;
+//	if (rainbowOffset == duration){
+//		rainbowOffset = 0;
+//		return true;
+//	}
+//	else
+//		return false;
+//}
+//
+//bool CVisualizer::fillrainbow(uint8_t hueOffset, uint8_t brightness) {
+//	// fills array with rainbow colors
+//	for (int i = 0; i < numLeds; i++)
+//		leds[i].setHSV((i * 255L / (numLeds - 1)) + hueOffset, 255, brightness);
+//	return true;
+//}
+//
+//uint8_t CVisualizer::fade(uint16_t current, uint16_t target) {
+//	// fadein - fadeout effect
+//
+//	// check if fade in/out is needed
+//	uint16_t borders = ((target + 1) / 16);
+//	if (borders < 3)
+//		return 255;
+//	uint8_t brightness;
+//
+//	// Fade in
+//	if (current < borders)
+//		//brightness = sin8(current * 255L / borders / 2 - 64);
+//		brightness = current * 255L / borders;
+//	// out of range
+//	else if (current > target)
+//		brightness = 0;
+//	// Fade out
+//	else if (current > (target - borders))
+//		//brightness = sin8((target - current) * 255L / borders / 2 - 64);
+//		brightness = (target - current) * 255L / borders;
+//	// Max brightness
+//	else
+//		brightness = 255;
+//
+//	return brightness;
+//}

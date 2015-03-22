@@ -14,15 +14,16 @@
 #define NUM_LEDS    20
 
 #define BRIGHTNESS  63 // reduce power consumption
-#define DITHER      0  // try this to disable flickering
+#define DITHER      255  // try this to disable flickering
 #define CORRECTION TypicalLEDStrip
 
 // Define the array of leds
 CRGB leds[NUM_LEDS];
 
 // Effects
-CHeartbeatDynamic h(&leds[0], 10, FramesPerSecond(200));
-CHeartbeatSolid hS(CRGB::Blue, &leds[10], 10, FramesPerSecond(200), 128);
+CHeartbeatDynamic h(&leds[0], 10, FramesPerSecond(60));
+CHeartbeatSolid hS(CRGB::Blue, &leds[10], 10, FramesPerSecond(200), 0);
+CRainbowswirl r(0, &leds[0], 10, FramesPerSecond(1000));
 
 void setup() {
   // debug Serial
@@ -41,29 +42,44 @@ void setup() {
 
   // todo needed?
   h.begin();
+  r.begin();
+  delay(100);
 }
 
 void loop() {
   // variable to determine if leds have changed
+  uint32_t time = millis(); //todo move up
   bool ledChange = false;
 
   // update strip color (pretending new colors were set)
-  bool colorChange = true;
-  fill_solid(&leds[0], 10, CRGB::Green);
-  ledChange |= colorChange;
+  //static bool effectChange = false;
+  bool colorChange = h.available();
+  colorChange |= r.update(time, colorChange);
 
   // execute effect on the underlying colors
-  uint32_t time = millis(); //todo move up
+  // update color next time before the effect want to update/scale down brightness
   bool effectChange =  h.update(time, colorChange);
-  if (effectChange) {
-    //todo update color next time before the effect want to update/scale down brightness
-  }
+
+  ledChange |= colorChange;
   ledChange |= effectChange;
-  ledChange |= hS.update(time);
+  bool kChange = hS.update(time);
+  ledChange |= kChange;
 
   // update Leds
-  if (ledChange)
+  if (ledChange) {
     FastLED.show();
+
+    //    Serial.print(colorChange);
+    //    Serial.print(" ");
+    //    Serial.print(effectChange);
+    //    Serial.print(" ");
+    //    Serial.print(kChange);
+    //    Serial.print(" ");
+    //    Serial.println(leds[0].r);
+    //
+    //    if (r.finished())
+    //      while (1);
+  }
 
   return;
   /*
@@ -111,4 +127,3 @@ void loop() {
     FastLED.delay(300);
     */
 }
-

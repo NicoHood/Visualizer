@@ -75,7 +75,7 @@ extern CVisualizer Visualizer;
 
 // speed setting limited to 2 bytes
 // = max update period every 65.535s (about 1 min)
-typedef uint16_t Effect_Speed_t;
+typedef uint16_t Effect_Speed_t; //todo reduce to 8bit?
 typedef uint8_t Effect_NumLeds_t; //TODO settings note
 
 #define EFFECT_DEFAULT_LEDS 0
@@ -118,12 +118,13 @@ public:
 	inline void setLeds(CRGB* l) { leds = l; }
 	inline void setNumLeds(Effect_NumLeds_t len) { numLeds = len; }
 	inline void setSpeed(Effect_Speed_t speed) { interval = speed; }
-
+	inline Effect_NumLeds_t getNumLeds(void) { return numLeds; }
+	inline Effect_Speed_t getSpeed(void) { return interval; }
 
 protected:
-	// variables to point to the led array, length and speed setting
+	// variables to point to the beginning of first led array element, length and speed setting
 	CRGB* leds;
-	Effect_NumLeds_t numLeds; //TODO negative order, backwards?
+	Effect_NumLeds_t numLeds;
 	Effect_Speed_t interval;
 
 private:
@@ -182,5 +183,48 @@ public:
 protected:
 	uint8_t offset;
 };
+
+//================================================================================
+// Rainbowswirl
+//================================================================================
+
+/*
+todo
+*/
+
+class CRainbowswirl : public CEffect{
+public:
+	// use parent constructors
+	inline CRainbowswirl(void) : CRainbowswirl(EFFECT_DEFAULT_OFFSET) {}
+	inline CRainbowswirl(uint8_t newOffset) : CRainbowswirl(newOffset, NULL, EFFECT_DEFAULT_LEDS) {}
+	inline CRainbowswirl(uint8_t newOffset, CRGB* l, Effect_NumLeds_t len) : CRainbowswirl(newOffset, l, len, EFFECT_DEFAULT_SPEED) {}
+	inline CRainbowswirl(uint8_t newOffset, CRGB* l, Effect_NumLeds_t len, Effect_Speed_t speed)
+		: CEffect(l, len, speed), offset(newOffset) {}
+
+	void reset(void); //TODO inline?
+	bool write(bool step);
+	bool finished(void); //TODO inline?
+
+	//todo make them just public?
+	inline void setOffset(uint8_t newOffset) { offset = newOffset; }
+	inline void setColor(CRGB color) { colorSolid = color; }
+
+protected:
+	uint8_t offset;
+	CRGB colorSolid;
+};
+
+
+//================================================================================
+// Ideas
+//================================================================================
+
+/*
+Bars, full over the whole strip faded or only the peek
+strobe
+
+capsulate effect funct from CEffect class to execute seperately for music visulization
+*/
+
 
 #endif
